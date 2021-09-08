@@ -1,3 +1,5 @@
-# FRONTEND
+# vite-vue-ssr
 
-Frontend for `APIMAN`.
+```
+npm run dev
+```
