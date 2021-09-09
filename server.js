@@ -69,12 +69,20 @@ async function createServer(
         render = require('./dist/server/entry-server.js').render
       }
 
-      const [appHtml, preloadLinks, state] = await render(url, manifest)
-
+      const [appHtml, preloadLinks, initState] = await render(url, manifest, req)
+      const initStateText = JSON.stringify(initState).replace(/[<>\/\u2028\u2029]/g, e => {
+        return  {
+            '<': '\\u003C',
+            '>': '\\u003E',
+            '/': '\\u002F',
+            '\u2028': '\\u2028',
+            '\u2029': '\\u2029'
+        }[e] || e
+      })
       const html = template
         .replace(`<!--preload-links-->`, preloadLinks)
         .replace(`<!--app-html-->`, appHtml)
-        .replace(`<!--init-state-->`, `<script id="ssr-data" type="text/json">${JSON.stringify(state).replace(/\//g, '\\/')}</script>`)
+        .replace(`<!--init-state-->`, `<script id="ssr-data" type="text/json">${initStateText}</script>`)
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html)
     } catch (e) {

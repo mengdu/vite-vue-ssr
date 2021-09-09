@@ -2,15 +2,25 @@ import { createApp } from './main'
 import { renderToString } from '@vue/server-renderer'
 import { getAsyncData } from './router'
 
-export async function render(url, manifest) {
+export async function render(url, manifest, req) {
   const { app, router, state } = createApp()
 
   // set the router to the desired URL before rendering
   router.push(url)
   await router.isReady()
 
-  const states = await getAsyncData(router.currentRoute.value, {})
-  state.value = states
+  const states = await getAsyncData({
+    route: router.currentRoute.value,
+    req
+  })
+  const initState = {
+    path: router.currentRoute.value.fullPath,
+    states,
+    isSSR: true,
+    asyncDataLoading: false
+  }
+
+  state.value = initState
 
   // passing SSR context object which will be available via useSSRContext()
   // @vitejs/plugin-vue injects code into a component's setup() that registers
@@ -24,7 +34,7 @@ export async function render(url, manifest) {
   // which we can then use to determine what files need to be preloaded for this
   // request.
   const preloadLinks = renderPreloadLinks(ctx.modules, manifest)
-  return [html, preloadLinks, states]
+  return [html, preloadLinks, initState]
 }
 
 function renderPreloadLinks(modules = [], manifest) {

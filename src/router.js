@@ -27,19 +27,18 @@ export function createRouter() {
   })
 }
 
-export async function getAsyncData (route) {
+export async function getAsyncData ({ route, req }) {
   const promises = []
-  const params = {
-    query: route.query,
-    params: route.params,
-    fullPath: route.fullPath,
-    href: route.href
-  }
+
   route.matched.forEach(e => {
     if (e.components.default.asyncData) {
-      promises.push(e.components.default.asyncData.apply(null, [params]))
+      promises.push(e.components.default.asyncData.apply(null, [{route, req}]))
     }
   })
+
+  if (promises.length === 0) {
+    return []
+  }
 
   const states = await Promise.all(promises)
   return states
